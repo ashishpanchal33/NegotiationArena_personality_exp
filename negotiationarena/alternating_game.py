@@ -1,7 +1,7 @@
 import os
 import time
 import json
-from negotiationarena.constants import ACCEPTING_TAG
+from negotiationarena.constants import ACCEPTING_TAG, REJECTION_TAG
 import inspect
 from pathlib import Path
 from typing import List
@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from negotiationarena.game_objects.game import Game
 from negotiationarena.agents.agents import Agent
 from negotiationarena.utils import get_next_filename
-from negotiationarena.constants import PLAYER_ANSWER_TAG
+from negotiationarena.constants import PLAYER_ANSWER_TAG , PROPOSED_TRADE_TAG, RESOURCES_TAG
 
 
 class AlternatingGame(Game):
@@ -49,6 +49,8 @@ class AlternatingGame(Game):
         self.iterations = iterations
         self.current_iteration = 1
         self.game_interface = None
+        
+        self.game_development = dict(price=[],action=[],turn=[],last_price=0,reject = 0)
 
     @abstractmethod
     def game_over(self):
@@ -88,6 +90,37 @@ class AlternatingGame(Game):
             player_complete_answer=response,
             player_state=[player.get_state() for player in players],
         )
+
+        print("____")
+        #try:
+        #print(dir(agent_message.public[PROPOSED_TRADE_TAG]))
+        #    print(str(agent_message.public[PROPOSED_TRADE_TAG].resources_from_first_agent),str(agent_message.public[PROPOSED_TRADE_TAG].resources_from_second_agent))
+        #except:
+        #    print(agent_message.public[PROPOSED_TRADE_TAG])
+        
+        print((self.player_goals[0]).json())
+        print((self.player_goals[1]).json(), RESOURCES_TAG)
+        #print(dir(self.player_starting_resources[1]), self.player_starting_resources[1].value() )
+        #a()
+
+        print(agent_message.public[PLAYER_ANSWER_TAG])
+        
+        if agent_message.public[PLAYER_ANSWER_TAG] not in [ACCEPTING_TAG, REJECTION_TAG]:
+            pri = int(agent_message.public[PROPOSED_TRADE_TAG].resources_from_second_agent.value())/int(agent_message.public[PROPOSED_TRADE_TAG].resources_from_first_agent.value())
+        else:
+            pri = self.game_development['price'][-1]
+            self.game_development['last_price'] = pri
+            self.game_development['reject'] = (agent_message.public[PLAYER_ANSWER_TAG] == REJECTION_TAG)
+
+        print(pri, '---')
+            
+        self.game_development['price'].append(pri)
+        self.game_development['action'].append(agent_message.public[PLAYER_ANSWER_TAG])
+        self.game_development['turn'].append(self.turn)
+        #if agent_message.public[PLAYER_ANSWER_TAG] in []:
+        #    self.game_development['last_price']
+        
+        print(self.game_development)
 
         self.game_state.append(datum)
 
@@ -298,7 +331,7 @@ class AlternatingGameEndsOnTag(AlternatingGame):
             iterations=iterations,
         )
 
-        self.end_tag = ACCEPTING_TAG
+        self.end_tag = [ACCEPTING_TAG, REJECTION_TAG]
 
     def game_over(self):
         """
@@ -309,7 +342,7 @@ class AlternatingGameEndsOnTag(AlternatingGame):
             response = state["player_public_info_dict"].get(PLAYER_ANSWER_TAG)
             # TODO: this is pretty buggy
             iteration = state.get("current_iteration", 0)
-            if response == self.end_tag or iteration == self.iterations:
+            if( response in self.end_tag) or iteration == self.iterations:
                 return True
 
         return False

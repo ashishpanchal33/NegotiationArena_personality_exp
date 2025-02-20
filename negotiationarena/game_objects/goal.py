@@ -77,7 +77,7 @@ class BuyerGoal(Goal):
     def __init__(self, willingness_to_pay: Valuation):
         super().__init__()
         self.willingness_to_pay = willingness_to_pay
-        self.goal = f"Buy resources with <{MONEY_TOKEN}>. You are willing to pay at most {willingness_to_pay} for the resources."
+        self.goal = f"Buy resources with <{MONEY_TOKEN}>. You might want to maximize profit. You think you can resell the product at {willingness_to_pay} for the resources."
 
     def __repr__(self):
         return self.goal
@@ -102,7 +102,7 @@ class SellerGoal(Goal):
     def __init__(self, cost_of_production: Valuation):
         super().__init__()
         self.cost_of_production = cost_of_production
-        self.goal = f"Sell resources for <{MONEY_TOKEN}>. It costed {self.cost_of_production} to produce the resources"
+        self.goal = f"Sell resources for <{MONEY_TOKEN}>. You might want to maximize profit. It costed {self.cost_of_production} to produce the resources"
 
     def __repr__(self):
         return self.goal

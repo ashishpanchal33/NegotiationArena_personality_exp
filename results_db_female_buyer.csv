@@ -1,0 +1,9 @@
+,price,action,turn,last_price,reject,offer_counteroffer_diff,start_finish_diff,U_s,U_b,G,exp_id
+0,"[100.0, 40.0, 80.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,60.0,40.0,20.0,0.0,1.0,0
+1,"[80.0, 50.0, 65.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,30.0,20.0,20.0,0.0,1.0,2
+2,"[100.0, 60.0, 80.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,40.0,40.0,20.0,0.0,1.0,3
+3,"[80.0, 60.0, 70.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,20.0,20.0,20.0,0.0,1.0,4
+4,"[80.0, 60.0, 70.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,20.0,20.0,20.0,0.0,1.0,5
+5,"[80.0, 60.0, 70.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,20.0,20.0,20.0,0.0,1.0,7
+6,"[80.0, 60.0, 70.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,20.0,20.0,20.0,0.0,1.0,8
+7,"[100.0, 40.0, 80.0, 60.0, 60.0]","['PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'PROPOSAL', 'ACCEPT']","[0, 1, 0, 1, 0]",60.0,False,60.0,40.0,20.0,0.0,1.0,9

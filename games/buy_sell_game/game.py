@@ -67,7 +67,12 @@ class BuySellGameDefaultParser(ExchangeGameDefaultParser):
                 PROPOSED_TRADE_TAG,
             ],
         )
-        resources = Resources.from_string(resources)
+        try:
+            resources = Resources.from_string(resources)
+        except Exception as e:
+            print(e)
+            print(resources)
+            a()
         trade = self.parse_trade(response, PROPOSED_TRADE_TAG)
 
         # create the message, we are going to split between public messages and secret messages.
@@ -79,6 +84,8 @@ class BuySellGameDefaultParser(ExchangeGameDefaultParser):
             [message, answer, trade],
         ):
             ms.add_public(tag, content)
+
+        
 
         for tag, content in zip(
             [RESOURCES_TAG, GOALS_TAG, REASONING_TAG, PROPOSAL_COUNT_TAG],
@@ -104,6 +111,8 @@ class BuySellGame(AlternatingGameEndsOnTag):
         # we compute the set of resources available in game.
         # this is done just to "inform" the agents of the resources available in the game.
         resources_support_set = {}
+
+        self.game_development = dict(price=[],action=[],turn=[])
 
         if len(player_starting_resources[0].resource_dict) > 1:
             raise ValueError(
