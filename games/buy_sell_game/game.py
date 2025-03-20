@@ -174,6 +174,60 @@ class BuySellGame(AlternatingGameEndsOnTag):
 
             player.init_agent(game_prompt, settings["player_roles"][idx])
 
+    def write_game_state(
+        self,
+        players,
+        response,
+        ):
+        try:
+            agent_message = self.game_interface.parse(response)
+        except Exception as e:
+            print("response : {}".format(response))
+            raise e
+
+        datum = dict(
+            current_iteration=self.current_iteration,
+            turn=self.turn,
+            player_public_answer_string=agent_message.message_to_other_player(),
+            player_public_info_dict=agent_message.public,
+            player_private_info_dict=agent_message.secret,
+            player_complete_answer=response,
+            player_state=[player.get_state() for player in players],
+        )
+        
+        print("____")
+        #try:
+        #print(dir(agent_message.public[PROPOSED_TRADE_TAG]))
+        #    print(str(agent_message.public[PROPOSED_TRADE_TAG].resources_from_first_agent),str(agent_message.public[PROPOSED_TRADE_TAG].resources_from_second_agent))
+        #except:
+        #    print(agent_message.public[PROPOSED_TRADE_TAG])
+        
+        print((self.player_goals[0]).json())
+        print((self.player_goals[1]).json(), RESOURCES_TAG)
+        #print(dir(self.player_starting_resources[1]), self.player_starting_resources[1].value() )
+        #a()
+
+        print(agent_message.public[PLAYER_ANSWER_TAG])
+        
+        if agent_message.public[PLAYER_ANSWER_TAG] not in [ACCEPTING_TAG, REJECTION_TAG]:
+            pri = int(agent_message.public[PROPOSED_TRADE_TAG].resources_from_second_agent.value())/int(agent_message.public[PROPOSED_TRADE_TAG].resources_from_first_agent.value())
+        else:
+            pri = self.game_development['price'][-1]
+            self.game_development['last_price'] = pri
+            self.game_development['reject'] = (agent_message.public[PLAYER_ANSWER_TAG] == REJECTION_TAG)
+
+        print(pri, '---')
+            
+        self.game_development['price'].append(pri)
+        self.game_development['action'].append(agent_message.public[PLAYER_ANSWER_TAG])
+        self.game_development['turn'].append(self.turn)
+        #if agent_message.public[PLAYER_ANSWER_TAG] in []:
+        #    self.game_development['last_price']
+        
+        print(self.game_development)
+
+        self.game_state.append(datum)
+
     def after_game_ends(self):
         """
         This method is called after the game ends. For example

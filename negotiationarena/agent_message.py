@@ -30,7 +30,7 @@ class AgentMessage:
     def message_to_other_player(self):
         response = []
         for key, value in self.public.items():
-            response.append(from_name_and_tag_to_message(key, value))
+            response.append(from_name_and_tag_to_message( value,key))
 
         r = "\n".join(response)
 

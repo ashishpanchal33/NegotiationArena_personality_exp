@@ -121,3 +121,57 @@ class SellerGoal(Goal):
             "_type": "seller_goal",
             "_value": self.cost_of_production.json(),
         }
+
+
+
+
+
+
+class BuyerGoalIntegrate(Goal):
+    def __init__(self, willingness_to_pay: Valuation):
+        super().__init__()
+        self.willingness_to_pay = willingness_to_pay
+        self.goal = f"Buy object. Negotiate on different factors. You might want to maximize overall profit."
+
+    def __repr__(self):
+        return self.goal
+
+    def get_valuation(self):
+        return self.willingness_to_pay
+
+    def __str__(self):
+        return self.goal
+
+    def to_prompt(self):
+        return self.goal
+
+    def json(self):
+        return {
+            "_type": "buyer_goal",
+            "_value": self.willingness_to_pay.json(),
+        }
+
+
+class SellerGoalIntegrate(Goal):
+    def __init__(self, cost_of_production: Valuation):
+        super().__init__()
+        self.cost_of_production = cost_of_production
+        self.goal = f"Sell objects. Negotiate on different factors. You might want to maximize overall profit"
+
+    def __repr__(self):
+        return self.goal
+
+    def get_valuation(self):
+        return self.cost_of_production
+
+    def __str__(self):
+        return self.goal
+
+    def to_prompt(self):
+        return self.goal
+
+    def json(self):
+        return {
+            "_type": "seller_goal",
+            "_value": self.cost_of_production.json(),
+        }

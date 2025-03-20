@@ -1,7 +1,7 @@
 import json
 from negotiationarena.game_objects.goal import *
-from negotiationarena.game_objects.trade import Trade
-from negotiationarena.game_objects.valuation import Valuation
+from negotiationarena.game_objects.trade import *
+from negotiationarena.game_objects.valuation import *
 from negotiationarena.agents.agents import Agent
 from negotiationarena.parser import GameParser
 
@@ -22,6 +22,12 @@ class GameDecoder(json.JSONDecoder):
         if type == "valuation":
             return Valuation(obj["_value"])
 
+        if type == "ValuationIntegrativeBuyer":
+            return ValuationIntegrativeBuyer(obj["_value"])
+
+        if type == "ValuationIntegrativeSeller":
+            return ValuationIntegrativeSeller(obj["_value"])
+
         if type == "goal":
             goal_type = obj["_value"]["_type"]
             goal_val = obj["_value"]["_value"]
@@ -35,11 +41,20 @@ class GameDecoder(json.JSONDecoder):
                 return BuyerGoal(goal_val)
             elif goal_type == "seller_goal":
                 return SellerGoal(goal_val)
+            elif goal_type == "BuyerGoalIntegrate":
+                return BuyerGoalIntegrate(goal_val)
+            elif goal_type == "SellerGoalIntegrate":
+                return SellerGoalIntegrate(goal_val)
 
         if type == "trade":
             return Trade(
                 {k: v.resource_dict for k, v in obj["_value"].items()}
             )
+        if type == "TradeIntegrative":
+            return TradeIntegrative(
+                {k: v.resource_dict for k, v in obj["_value"].items()}
+            )
+        
         # if type == "valuation":
         #     pass
         # return parser.parse(obj["value"])
@@ -48,8 +63,19 @@ class GameDecoder(json.JSONDecoder):
 
 class GameEncoder(json.JSONEncoder):
     def default(self, obj):
+
+        #print(obj.__class__)
+        #print('-----------',obj)
+        
         if isinstance(obj, Goal):
             return {"_type": "goal", "_value": obj.json()}
+
+        if isinstance(obj, BuyerGoalIntegrate):
+            return {"_type": "BuyerGoalIntegrate", "_value": obj.json()}
+
+        if isinstance(obj, SellerGoalIntegrate):
+            return {"_type": "SellerGoalIntegrate", "_value": obj.json()}
+            
 
         if isinstance(obj, Trade):
             return {
@@ -57,8 +83,20 @@ class GameEncoder(json.JSONEncoder):
                 "_value": {k: self.default(v) for k, v in obj.json().items()},
             }
 
+        if isinstance(obj, TradeIntegrative ):
+            return {
+                "_type": "TradeIntegrative",
+                "_value": {k: self.default(v) for k, v in obj.json().items()},
+            } 
+
         if isinstance(obj, Valuation):
             return {"_type": "valuation", "_value": obj.valuation_dict}
+
+        if isinstance(obj, ValuationIntegrativeBuyer):
+            return {"_type": "ValuationIntegrativeBuyer", "_value": obj.valuation_dict}
+
+        if isinstance(obj, ValuationIntegrativeSeller):
+            return {"_type": "ValuationIntegrativeSeller", "_value": obj.valuation_dict}
 
         if isinstance(obj, Resources):
             return {"_type": "resource", "_value": obj.resource_dict}

@@ -90,7 +90,7 @@ class AlternatingGame(Game):
             player_complete_answer=response,
             player_state=[player.get_state() for player in players],
         )
-
+        
         print("____")
         #try:
         #print(dir(agent_message.public[PROPOSED_TRADE_TAG]))
@@ -308,7 +308,7 @@ class AlternatingGame(Game):
                 log_str += "\n".join(data)
 
         # write to log-file
-        with open(os.path.join(self.log_path, "interaction.log"), "w") as f:
+        with open(os.path.join(self.log_path, "interaction.log"), "w",encoding='utf8') as f:
             f.write(log_str)
 
 
