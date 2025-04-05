@@ -332,7 +332,7 @@ def buy_sell_prompt(
 
         <{MESSAGE_TAG}>your message here (also mention three-letter trade sequence)</{MESSAGE_TAG}>
 
-        You can decide if you want disclose your resources, goals, cost and willingness to pay in the message. However, you may not disclose details about your profit schedule, as they are confidential.
+        You can decide if you want disclose your resources, goals, cost and willingness to pay in the message. However, you may not disclose details about your profit schedule, as they are confidential. 
         ```
 
         Here is what you have access to:
