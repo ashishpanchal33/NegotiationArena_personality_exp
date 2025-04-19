@@ -1,7 +1,7 @@
 import os
 import time
 import json
-from negotiationarena.constants import ACCEPTING_TAG
+from negotiationarena.constants import ACCEPTING_TAG, REJECTION_TAG # addition of rejection_tag
 import inspect
 from pathlib import Path
 from typing import List
@@ -298,7 +298,12 @@ class AlternatingGameEndsOnTag(AlternatingGame):
             iterations=iterations,
         )
 
-        self.end_tag = ACCEPTING_TAG
+        #self.end_tag = ACCEPTING_TAG #original
+        # Original: `end_tag` was restricted to `ACCEPTING_TAG` only.
+        # Issue: This caused the game to continue with invalid conversations when offers were rejected.
+        # Fix: Changed `end_tag` to a list containing both `ACCEPTING_TAG` and `REJECTION_TAG`.
+        self.end_tag = [ACCEPTING_TAG, REJECTION_TAG]
+        # This change is reflected in the `game_over` function.
 
     def game_over(self):
         """
@@ -307,9 +312,12 @@ class AlternatingGameEndsOnTag(AlternatingGame):
         state = self.game_state[-1]
         if state:
             response = state["player_public_info_dict"].get(PLAYER_ANSWER_TAG)
-            # TODO: this is pretty buggy
+            ## TODO: this is pretty buggy
             iteration = state.get("current_iteration", 0)
-            if response == self.end_tag or iteration == self.iterations:
+            #if response == self.end_tag or iteration == self.iterations: #original
+            # Original: Checked if response == self.end_tag, which was a single tag.
+            # Update: Now checks if `response` is included in `end_tag` (a list).   
+            if (response in self.end_tag) or iteration == self.iterations: 
                 return True
 
         return False
