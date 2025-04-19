@@ -30,12 +30,17 @@ class AgentMessage:
     def message_to_other_player(self):
         response = []
         for key, value in self.public.items():
-            #response.append(from_name_and_tag_to_message(key, value)) # original  key is the tag name and value is contect
-            #however from_name_and_tag_to_message follows the signature : (name, tag), and returns f"<{tag}> {name} </{tag}>"
-            # there key (the actual tag) is mapped to name and value (the actual content) is mapped to tag resulting in <{content}> {tag} </{content}> 
-            # this resulting in 2x prompt size when passing the message history at each turn, resulting in high token count and cost
-            #FIX: 
-            response.append(from_name_and_tag_to_message(value, key)) #swap key with value now returns <{tag}> {content} </{tag}>
+            #response.append(from_name_and_tag_to_message(key, value)) # original
+            
+            # The original implementation incorrectly passed (key, value) to from_name_and_tag_to_message, 
+            # where 'key' represents the tag name, and 'value' is the content.
+            # The function expects arguments (name, tag) but was passed (tag, content), 
+            # resulting in a reversed mapping: <{content}> {tag} </{content}>.
+            # This caused the prompt size to double when passing the message history, 
+            # increasing token usage and cost.
+            
+            # FIX: Swap 'key' and 'value' to correctly return <{tag}> {content} </{tag}>
+            response.append(from_name_and_tag_to_message(value, key))
 
         r = "\n".join(response)
 
