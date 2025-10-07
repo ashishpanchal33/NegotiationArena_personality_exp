@@ -9,6 +9,7 @@ from negotiationarena.constants import (
     RESOURCES_TAG,
     GOALS_TAG,
     ACCEPTING_TAG,
+    REJECTION_TAG,
 )
 
 from negotiationarena.utils import extract_multiple_tags

@@ -14,10 +14,21 @@ from webapp.basic_elements.game_filtering import *
 from games import *
 
 # data loading
+print('---------------------')
+print(os.path.abspath(__file__))
+
 root_dir = os.path.abspath(__file__).split("/")[:-3]
 log_dir = st.text_input(
     "Log Directory", value=os.path.join("/", *root_dir, ".logs", "buysell")
 )
+
+root_dir = r"D:\Tiny Risk Project"#.split("/")[:-3]
+log_dir = st.text_input(
+    "Log Directory", value=os.path.join(root_dir, r"example_logs\buysell")
+)
+
+print(root_dir,log_dir)
+
 log_files = glob(os.path.join(log_dir, "*", "*.json"))
 games = load_states_from_dir(log_dir)
 games_summary_df = compute_game_summary(games)

@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from negotiationarena.game_objects.game import Game
 from negotiationarena.agents.agents import Agent
 from negotiationarena.utils import get_next_filename
-from negotiationarena.constants import PLAYER_ANSWER_TAG , PROPOSED_TRADE_TAG, RESOURCES_TAG
+from negotiationarena.constants import PLAYER_ANSWER_TAG , PROPOSED_TRADE_TAG, RESOURCES_TAG, ACCEPTING_TAG
 
 
 class AlternatingGame(Game):
@@ -38,9 +38,9 @@ class AlternatingGame(Game):
         players: List[List],
         log_dir: str = ".logs",
         log_path=None,
-        iterations: int = 8,
+        iterations: int = 8, **kwargs
     ):
-        super().__init__(players=players, log_dir=log_dir, log_path=log_path)
+        super().__init__(players=players, log_dir=log_dir, log_path=log_path, **kwargs)
 
         # default start with player 0
         self.turn = 0
@@ -322,13 +322,13 @@ class AlternatingGameEndsOnTag(AlternatingGame):
     """
 
     def __init__(
-        self, players: List[List], log_dir=".logs", log_path=None, iterations=8
+        self, players: List[List], log_dir=".logs", log_path=None, iterations=8, **kwargs
     ):
         super().__init__(
             players=players,
             log_dir=log_dir,
             log_path=log_path,
-            iterations=iterations,
+            iterations=iterations, **kwargs
         )
 
         self.end_tag = [ACCEPTING_TAG, REJECTION_TAG]

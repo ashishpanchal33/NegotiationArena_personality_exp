@@ -11,14 +11,25 @@ from negotiationarena.agents.agent_behaviours import SelfCheckingAgent
 from copy import deepcopy
 
 
-class ChatGPTAgent(Agent):
+from openai import OpenAI
+
+# Initialize the client to connect to your local Ollama instance
+#client = OpenAI(
+#    base_url="http://172.16.68.4:1234",  # Local Ollama API
+#    api_key="ollama",  # Dummy key, as it's not required for local Ollama
+#)
+
+
+class OLLAMAAgent(Agent):
     def __init__(
         self,
         #agent_name: str,
-        model="gpt-4-1106-preview",
+        model="gemma:2b",
+        base_url="http://172.16.68.4:1234/v1",
         temperature=0.7,
         max_tokens=400,
         seed=None,
+        api_key="ollama",
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -26,7 +37,7 @@ class ChatGPTAgent(Agent):
         self.model = model
         self.conversation = []
 
-        if model[:2] =="o1":
+        if 0:#model[:2] =="o1":
             self.prompt_entity_initializer = "assistant"
         else:
             self.prompt_entity_initializer = "system"
@@ -35,7 +46,7 @@ class ChatGPTAgent(Agent):
             if seed is None
             else seed
         )
-        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.client = OpenAI(api_key=api_key,base_url=base_url)
         self.temperature = temperature
         self.max_tokens = max_tokens
 
@@ -72,10 +83,11 @@ class ChatGPTAgent(Agent):
 
     def chat(self):
 
-        if self.model[:2] == "o1":
+        if 1:#self.model[:2] == "o1":
             chat = self.client.chat.completions.create(
             model=self.model,
             messages=self.conversation,
+            temperature=self.temperature,
             seed=self.seed,
             )
         else:
@@ -94,6 +106,6 @@ class ChatGPTAgent(Agent):
                                   "content": message})
 
 
-class SelfCheckingChatGPTAgent(ChatGPTAgent, SelfCheckingAgent):
+class SelfCheckingOLLAMAAgent(OLLAMAAgent, SelfCheckingAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
