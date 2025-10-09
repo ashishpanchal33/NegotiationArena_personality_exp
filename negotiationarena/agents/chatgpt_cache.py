@@ -21,7 +21,7 @@ class ChatGPTAgent(Agent):
         max_tokens=400,
         seed=None,
         previous_response_id = None,
-        wait = 0.3
+        wait = 0.3,
         **kwargs
     ):
         super().__init__(**kwargs)
