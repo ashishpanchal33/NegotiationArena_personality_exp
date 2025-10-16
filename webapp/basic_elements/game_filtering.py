@@ -17,13 +17,13 @@ def game_filter(games_summary_df):
 
         filter_behaviour_one = st.selectbox(
             "Filter Behavior Player One?",
-            games_summary_df["behaviour_1"].unique().tolist(),
+            [i for i in games_summary_df["behaviour_1"].unique().tolist() if 'woman' not in i],
             index=None,
         )
 
         filter_behaviour_two = st.selectbox(
             "Filter Behavior Player Two?",
-            games_summary_df["behaviour_2"].unique().tolist(),
+            [i for i in games_summary_df["behaviour_2"].unique().tolist() if 'woman' not in i],
             index=None,
         )
 

@@ -7,7 +7,7 @@ sys.path.append(".")
 import os
 
 os.environ["OPENAI_API_KEY"] = "g"
-from games.simple_game.game import SimpleGame
+from games.buy_sell_game.game import BuySellGame
 from glob import glob
 from utils import *
 from negotiationarena.constants import *

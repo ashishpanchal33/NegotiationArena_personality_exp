@@ -21,7 +21,7 @@ class ChatGPTAgent(Agent):
         max_tokens=400,
         seed=None,
         previous_response_id = None,
-        wait = 0.3,
+        wait = 0.2,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -115,9 +115,12 @@ class ChatGPTAgent(Agent):
 
         if len(response.output_text) == 0:
             a()
+
+
+        
             
         if self.wait:
-            time.sleep(len(response.output_text)*self.wait)
+            time.sleep(len(response.output_text.split('<message>')[-1][:-11])*self.wait)
         
         return response.output_text
 
