@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from negotiationarena.game_objects.game import Game
 from negotiationarena.agents.agents import Agent
 from negotiationarena.utils import get_next_filename
-from negotiationarena.constants import PLAYER_ANSWER_TAG , PROPOSED_TRADE_TAG, RESOURCES_TAG, ACCEPTING_TAG
+from negotiationarena.constants import PLAYER_ANSWER_TAG , PROPOSED_TRADE_TAG, RESOURCES_TAG, ACCEPTING_TAG, MESSAGE_TAG
 
 
 class AlternatingGame(Game):
@@ -219,6 +219,13 @@ class AlternatingGame(Game):
             # get ratbench state from last iteration
             message = self.read_iteration_message(iteration - 1)
 
+
+
+
+
+
+
+            
             # player to take a step/action based on current ratbench state
             response = self.players[self.turn].step(message)
             # print(response)

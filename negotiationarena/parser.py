@@ -65,9 +65,10 @@ class ExchangeGameDefaultParser(GameParser, ABC):
         :return:
         """
         trade = {}
-
+        
         c = s.strip().replace("\n", " ")
         for player in c.split("|"):
+            
             player_name = player.split("Player")[1].split("Gives")[0].strip()
             resources = player.split("Gives")[1].strip()
             # NOTE: We are casting the resources to int.

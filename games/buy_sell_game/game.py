@@ -175,6 +175,13 @@ class BuySellGame(AlternatingGameEndsOnTag):
 
             player.init_agent(game_prompt, settings["player_roles"][idx])
 
+            #this is an addition
+            player.add_config =  {"player_initial_resources":   settings["player_initial_resources"][idx],
+                                    "player_goal":settings["player_goals"][idx],} 
+
+
+            
+
     def write_game_state(
         self,
         players,

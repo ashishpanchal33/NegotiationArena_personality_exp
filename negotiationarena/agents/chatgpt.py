@@ -78,6 +78,14 @@ class ChatGPTAgent(Agent):
             messages=self.conversation,
             seed=self.seed,
             )
+        if "gpt-5" in self.model:
+            chat = self.client.chat.completions.create(
+            model=self.model,
+            messages=self.conversation,
+            temperature= 1, #self.temperature,
+            max_completion_tokens=self.max_tokens,
+            seed=self.seed,
+            )
         else:
             chat = self.client.chat.completions.create(
             model=self.model,
@@ -86,6 +94,10 @@ class ChatGPTAgent(Agent):
             max_tokens=self.max_tokens,
             seed=self.seed,
         )
+
+
+        print(chat.choices[0].message.content)
+            
 
         return chat.choices[0].message.content
 

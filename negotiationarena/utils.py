@@ -49,7 +49,7 @@ def from_name_and_tag_to_message(name, tag):
 
 
 def text_to_dict(s):
-    try
+    try:
         ret = {k: int(v) for k, v in (item.split(": ") for item in s.split(", "))}
     
         return ret
