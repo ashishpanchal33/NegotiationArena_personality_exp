@@ -88,7 +88,7 @@ class AIProxyClientAgent(Agent):
         # Track last assistant content (for convenience/logging)
         self._last_assistant_content = ""
 
-        
+        self._last_reponse = {}
         
         self.add_config =  {"player_initial_resources":   "X: 1",
                             "player_goal":"Sell resources for ZUP. You might want to maximize profit. It costed X: 40 ZUP to produce the resources"} 
@@ -137,9 +137,12 @@ class AIProxyClientAgent(Agent):
         return payload
 
 
-    def fetch_last_message(self):
+    def fetch_last_message(self,message_=None):
 
-        message_ = self.conversation[-1]['content']
+        if message_:
+            pass
+        else:
+            message_ = self.conversation[-1]['content']
 
         if type(message_) == str:
                 (
@@ -160,10 +163,12 @@ class AIProxyClientAgent(Agent):
             price = re.search(r'\d+$', trade_).group(0)
         else:
             (answer_old, trade_old) = extract_multiple_tags(self.conversation[-1]['content'],
-                                                           PLAYER_ANSWER_TAG, 
-                                                           PROPOSED_TRADE_TAG
+                                                           [PLAYER_ANSWER_TAG, 
+                                                           PROPOSED_TRADE_TAG]
                                                            )
+            
             price = re.search(r'\d+$', trade_old).group(0)
+        
         payload = {
             "session_id": self.session_id,
             "participant_id": self.participant_id,
@@ -174,16 +179,28 @@ class AIProxyClientAgent(Agent):
             "type": ( 'offer' if answer_=='PROPOSAL' else ('reject' if answer_ == REJECTION_TAG else 'accept')),
             "message": message_to_pass,
             "amount" : price,
-            "seed": self.seed,
-        }
+            "seed": self.seed,}
+        
+        
+        if answer_ == 'reject':
+    
+            last_offer_id = self._last_reponse ['human_move']['offer']['offer']['id']
+            
+            payload = payload | {"rejected_offer_id":last_offer_id}
+
+        elif answer_ == 'accept':
+
+            last_offer_id = self._last_reponse ['human_move']['offer']['offer']['id']
+    
+            payload = payload | {"accepted_offer_id":last_offer_id}
 
         return payload
 
 
-    def get_payload(self):
+    def get_payload(self,message_=None):
         # if the human is agent two then the ai would have saved something
         if ( self.sys_ and self.agent_name == AGENT_TWO) or (not self.sys_):
-            payload = self.fetch_last_message()
+            payload = self.fetch_last_message(message_)
         else:
             payload = self.base_payload()
         self.sys_ = False
@@ -191,13 +208,14 @@ class AIProxyClientAgent(Agent):
         return payload
 
 
-    def _post_submit(self, payload: dict) -> dict:
+    def _post_submit(self, payload: dict, return_code=False) -> dict:
         # After submit, we expect the next thing to be a human response
         try:
             resp = requests.post(self.submit_url, json=payload, timeout=self.client_timeout_seconds)
             resp.raise_for_status()  # i have to think about this... 
             return resp.json()
         except Exception as e:
+
             return {"success": False, "error": f"submit error: {e}"}
 
     def _post_wait(self, payload: dict) -> dict:
@@ -235,6 +253,8 @@ class AIProxyClientAgent(Agent):
     # rejection   #i can fetch offer  from past message
 
     def structure_internal_message(self,json_):
+
+        self._last_reponse = json_
 
         ret_ = ""
         # normal offer messages
