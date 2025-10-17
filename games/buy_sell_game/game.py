@@ -236,6 +236,74 @@ class BuySellGame(AlternatingGameEndsOnTag):
 
         self.game_state.append(datum)
 
+
+    def _detect_terminal_tag(self, message):
+        """
+        Detect 'accept' or 'reject' from the last message payload.
+        Adapt this to your actual message shape if needed.
+
+        """
+
+
+        end_state = self.game_state[-1]
+        return end_state["player_public_info_dict"][
+                        PLAYER_ANSWER_TAG
+                    ]
+    
+
+    def _post_terminal_accept_to_webapp_if_bridge_actor(self):
+        """
+        If the actor that made the terminal move is a bridge-type agent (carries submit_url
+        and session identifiers) and the terminal tag is 'accept', POST once to the web app.
+        """
+        try:
+            # Who just acted? At game_over(), self.turn is the actor that produced the last move.
+            actor = self.players[1-self.turn] # ther turn ended on one player .. now we check for the next player
+
+            # Duck-typing: only proceed if the agent carries these attributes
+            submit_url = getattr(actor, "submit_url", None)
+            session_id = getattr(actor, "session_id", None)
+            participant_id = getattr(actor, "participant_id", None)
+            agent_name = getattr(actor, "agent_name", None)
+
+            if not (submit_url and session_id and participant_id):
+                print('did not find the agent',  session_id , participant_id)
+                return  # not a bridge agent, or missing identifiers
+
+            message = self.read_iteration_message(self.current_iteration) #self.current_iteration
+
+            
+            # player to take a step/action based on current ratbench state
+            #response = self.players[self.turn].step(message)
+
+            tag = self._detect_terminal_tag(message)
+            if tag not in [ACCEPTING_TAG, REJECTION_TAG] :
+                print('did not find the tag',  tag) 
+                
+                return  # per requirement: only notify when the AI accepted
+
+            try:
+                # Keep this quick; we are in teardown. Do not block long.
+
+                payload = actor.fetch_last_message(message)
+                resp = actor._post_submit(payload)
+
+                print('resp_',resp)
+                #resp = requests.post(submit_url, json=payload, timeout=8)
+                if not resp['success']:
+                    logger.warning(
+                        "BuySellGame terminal accept POST non-2xx: %s %s",
+                        str(resp.error)[:200]
+                    )
+            except Exception as e:
+                print('eeeeee_',e)
+                logger.warning("BuySellGame terminal /reject POST failed: %s", e)
+
+        except Exception as e:
+            print('eeeeee',e)
+            logger.warning("BuySellGame terminal notify failed: %s", e, exc_info=True)
+
+    
     def after_game_ends(self):
         """
         This method is called after the game ends. For example
@@ -245,6 +313,8 @@ class BuySellGame(AlternatingGameEndsOnTag):
 
         :return:
         """
+        print('')
+        self._post_terminal_accept_to_webapp_if_bridge_actor()
         end_state = self.game_state[-1]
 
         # if there is only one iteration, we are going to set the game state to END
