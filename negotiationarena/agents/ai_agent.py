@@ -139,6 +139,7 @@ class AIProxyClientAgent(Agent):
 
     def fetch_last_message(self,message_=None):
 
+
         if message_:
             pass
         else:
@@ -158,6 +159,9 @@ class AIProxyClientAgent(Agent):
                         PROPOSED_TRADE_TAG,
                     ],
                 )
+
+
+        #print("answer_:", answer_, "message_to_pass:", message_to_pass, "trade_:", trade_)
         if answer_ == 'PROPOSAL':
         
             price = re.search(r'\d+$', trade_).group(0)
@@ -180,20 +184,24 @@ class AIProxyClientAgent(Agent):
             "message": message_to_pass,
             "amount" : price,
             "seed": self.seed,}
+
+
         
         
-        if answer_ == 'reject':
-    
-            last_offer_id = self._last_reponse ['human_move']['offer']['offer']['id']
+        if answer_ == REJECTION_TAG:
+
+            #print('last_offer_id---------',self._last_reponse )
             
-            payload = payload | {"rejected_offer_id":last_offer_id}
+            payload = payload | {"rejected_offer_id":self._last_reponse }
 
-        elif answer_ == 'accept':
+        elif answer_ == ACCEPTING_TAG:
 
-            last_offer_id = self._last_reponse ['human_move']['offer']['offer']['id']
+            #print('last_offer_id---------',self._last_reponse )
     
-            payload = payload | {"accepted_offer_id":last_offer_id}
+            payload = payload | {"accepted_offer_id":self._last_reponse }
 
+
+        
         return payload
 
 
@@ -254,7 +262,7 @@ class AIProxyClientAgent(Agent):
 
     def structure_internal_message(self,json_):
 
-        self._last_reponse = json_
+        
 
         ret_ = ""
         # normal offer messages
@@ -265,6 +273,8 @@ class AIProxyClientAgent(Agent):
         
         if json_['human_move']['offer']:
             if json_['human_move']['offer']['type'] == 'offer':
+                self._last_reponse = json_['human_move']['offer']['offer']['id']
+                
                 ret_ = f"""<proposal count> 1 </proposal count>
         <my resources> {self.add_config['player_initial_resources']}</my resources>
         <my goals> {self.add_config['player_goal']} </my goals>
