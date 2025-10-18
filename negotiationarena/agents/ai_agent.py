@@ -236,6 +236,38 @@ class AIProxyClientAgent(Agent):
         except Exception as e:
             return {"success": False, "error": f"wait error: {e}"}
 
+
+
+    def _wait_until_response(self, payload: dict, max_minutes: float | None = None, retry_base_delay: float = 1.0) -> dict:
+        """
+        Indefinite (or capped) long-poll loop: keeps calling wait until we get a success with a human_move.
+        Returns the first successful response. Logs and retries on timeouts/transient errors.
+        If max_minutes is None, loops forever.
+        """
+        start = time.monotonic()
+        attempt = 0
+        while True:
+            data = self._post_wait(payload)
+            # Success and human_move present -> return
+            if data.get("success") and data.get("human_move"):
+                return data
+            # If server returns success True but no human_move (shouldn't happen), keep looping
+            # If timeout/error, also keep looping
+            attempt += 1
+            # Optional cap
+            if max_minutes is not None:
+                if (time.monotonic() - start) >= max_minutes * 60:
+                    return data  # return whatever we have (caller should handle gracefully)
+            # Backoff a bit before next poll to avoid tight loop
+            time.sleep(min(retry_base_delay + attempt * 0.25, 3.0))
+
+
+
+
+
+
+            
+
     def _consume_content(self, data: dict) -> str:
         # Standardize the returned content field
         content = self.structure_internal_message(data)
@@ -359,7 +391,8 @@ class AIProxyClientAgent(Agent):
                 data = self._post_submit(payload)
                 if not data.get("success"):
                     # Server says it's not our turn; fallback to wait
-                    data = self._post_wait(payload)
+                    #data = self._post_wait(payload)
+                    data = self._wait_until_response(payload)
                     # After waiting, next turn should be our submit
                     self.expecting_human_next = False
                 else:
@@ -368,7 +401,8 @@ class AIProxyClientAgent(Agent):
             else:
                 # Agent two must wait first
                 print(2)
-                data = self._post_wait(payload)
+                data = self._wait_until_response(payload)
+                #data = self._post_wait(payload)
                 # After we waited (human spoke), we should submit next
                 self.expecting_human_next = False
             self.first_turn_done = True
@@ -380,15 +414,20 @@ class AIProxyClientAgent(Agent):
 
         
         # Subsequent turns:
-        if self.expecting_human_next:
+        if 0: #self.expecting_human_next:
+            print(3)
+            data = self._wait_until_response(payload)
             data = self._post_wait(payload)
             # After we waited, it's our turn to submit next
             self.expecting_human_next = False
         else:
+
+            print(4)
             data = self._post_submit(payload)
             if not data.get("success") and data.get("reason") == "not_turn":
                 # Server disagrees; we should wait now
-                data = self._post_wait(payload)
+                data = self._wait_until_response(payload)
+                #data = self._post_wait(payload)
                 # After waiting, we submit next
                 self.expecting_human_next = False
             else:
