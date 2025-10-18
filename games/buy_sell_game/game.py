@@ -17,6 +17,9 @@ from games.buy_sell_game.prompt import buy_sell_prompt
 from negotiationarena.parser import ExchangeGameDefaultParser
 from negotiationarena.agent_message import AgentMessage
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class BuySellGameDefaultParser(ExchangeGameDefaultParser):
     def __init__(self):
@@ -292,7 +295,7 @@ class BuySellGame(AlternatingGameEndsOnTag):
                 #resp = requests.post(submit_url, json=payload, timeout=8)
                 if not resp['success']:
                     logger.warning(
-                        "BuySellGame terminal accept POST non-2xx: %s %s",
+                        "BuySellGame terminal accept POST non-2xx: %s",
                         str(resp.error)[:200]
                     )
             except Exception as e:

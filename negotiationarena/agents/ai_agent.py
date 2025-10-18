@@ -161,7 +161,7 @@ class AIProxyClientAgent(Agent):
                 )
 
 
-        #print("answer_:", answer_, "message_to_pass:", message_to_pass, "trade_:", trade_)
+        print("answer_:", answer_, "message_to_pass:", message_to_pass, "trade_:", trade_)
         if answer_ == 'PROPOSAL':
         
             price = re.search(r'\d+$', trade_).group(0)
@@ -190,15 +190,15 @@ class AIProxyClientAgent(Agent):
         
         if answer_ == REJECTION_TAG:
 
-            #print('last_offer_id---------',self._last_reponse )
+            print('last_offer_id---------',self._last_reponse )
             
-            payload = payload | {"rejected_offer_id":self._last_reponse }
+            payload = payload | {"rejected_offer_id":self._last_reponse , "no_wait": True}
 
         elif answer_ == ACCEPTING_TAG:
 
-            #print('last_offer_id---------',self._last_reponse )
+            print('last_offer_id---------',self._last_reponse )
     
-            payload = payload | {"accepted_offer_id":self._last_reponse }
+            payload = payload | {"accepted_offer_id":self._last_reponse , "no_wait": True}
 
 
         
