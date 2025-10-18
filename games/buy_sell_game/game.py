@@ -246,14 +246,13 @@ class BuySellGame(AlternatingGameEndsOnTag):
         Adapt this to your actual message shape if needed.
 
         """
-
-
-        end_state = self.game_state[-1]
-        return end_state["player_public_info_dict"][
-                        PLAYER_ANSWER_TAG
-                    ]
+        try:
+            end_state = self.game_state[-1]
+            return end_state["player_public_info_dict"].get(PLAYER_ANSWER_TAG)
+        except Exception:
+            return None
     
-
+    
     def _post_terminal_accept_to_webapp_if_bridge_actor(self):
         """
         If the actor that made the terminal move is a bridge-type agent (carries submit_url
@@ -281,7 +280,39 @@ class BuySellGame(AlternatingGameEndsOnTag):
 
             tag = self._detect_terminal_tag(message)
             if tag not in [ACCEPTING_TAG, REJECTION_TAG] :
+
+                
                 print('did not find the tag',  tag) 
+
+                # Find AI bridge agent to get session info/submit_url
+                for p in self.players:
+                    submit_url = getattr(p, "submit_url", None)
+                    session_id = getattr(p, "session_id", None)
+                    participant_id = getattr(p, "participant_id", None)
+                    agent_name = getattr(p, "agent_name", None)
+                    role = getattr(p, "role", None)
+                    if submit_url and session_id and participant_id:
+                        payload = {
+                            "type": "session_end",
+                            "session_id": session_id,
+                            "participant_id": participant_id,
+                            "agent_name": agent_name,
+                            "role": role,
+                            "no_wait": True,
+                            "message": "Arena ended by iteration limit",
+                        }
+                        try:
+                            resp = requests.post(submit_url, json=payload, timeout=8)
+                            if resp.status_code >= 300:
+                                logger.warning("Session end POST non-2xx: %s", str(resp.error)[:200])
+    
+                        except Exception as e:
+                            logger.warning("Session end POST failed: %s", e)
+                        break    
+
+
+
+                
                 
                 return  # per requirement: only notify when the AI accepted
 

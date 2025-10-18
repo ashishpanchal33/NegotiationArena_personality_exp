@@ -10,7 +10,7 @@ from negotiationarena.constants import AGENT_TWO, AGENT_ONE
 from negotiationarena.agents.agent_behaviours import SelfCheckingAgent
 from copy import deepcopy
 
-from negotiationarena.constants import PLAYER_ANSWER_TAG , PROPOSED_TRADE_TAG, RESOURCES_TAG, ACCEPTING_TAG, MESSAGE_TAG , REJECTION_TAG
+from negotiationarena.constants import ACCEPTING_TAG ,PROPOSAL_COUNT_TAG ,RESOURCES_TAG ,GOALS_TAG ,REASONING_TAG ,PLAYER_ANSWER_TAG ,REJECTION_TAG ,PROPOSED_TRADE_TAG ,MESSAGE_TAG
 
 from negotiationarena.utils import extract_multiple_tags
 
@@ -300,46 +300,98 @@ class AIProxyClientAgent(Agent):
         # normal offer messages
 
 
-        
+        print('here------') 
         print(json_)
+
+
+
+       
+        hm = json_.get('human_move') or {}
+        # Handle explicit final (e.g., session_ended) early to end the game
+        if hm.get('final'):
+            # Map session end to a terminal rejection to let the game stop
+
+
+            if hm.get('final').get("type") == 'session_ended':
+
+    
+    
+                print('rejected------')   
+
+                
+
+
+
+
+
+
+                
+                ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
+                        <{RESOURCES_TAG}> {self.add_config['player_initial_resources']} </{RESOURCES_TAG}>
+                        <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+                        <{REASONING_TAG}> session ended  </{REASONING_TAG}>
+                        <{PLAYER_ANSWER_TAG}> {REJECTION_TAG} </{PLAYER_ANSWER_TAG}>
+                        <{PROPOSED_TRADE_TAG}> NONE</{PROPOSED_TRADE_TAG}>
+                        <{MESSAGE_TAG}> session_ended </{MESSAGE_TAG}>"""
+
+
+                #print(ret_)
+                return ret_
+
+
+
+
+        try:
+            
+            if json_['human_move']['offer']:
+                print('here------1')
+                if json_['human_move']['offer']['type'] == 'offer':
+                    print('here------1_1')
+                    self._last_reponse = json_['human_move']['offer']['offer']['id']
+                    
+                    ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
+            <{RESOURCES_TAG}> {self.add_config['player_initial_resources']}</{RESOURCES_TAG}>
+            <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+            <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
+            <{PLAYER_ANSWER_TAG}> PROPOSAL </{PLAYER_ANSWER_TAG}>
+            <{PROPOSED_TRADE_TAG}> Player RED Gives X: 1 | Player BLUE Gives ZUP: {int(float(json_['human_move']['offer']['offer']['amount']))} </{PROPOSED_TRADE_TAG}>
+            <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
+            # accept and reject messages
+                elif json_['human_move']['offer']['type'] == 'offer_response':
+    
+                    print('here------2')
         
-        if json_['human_move']['offer']:
-            if json_['human_move']['offer']['type'] == 'offer':
-                self._last_reponse = json_['human_move']['offer']['offer']['id']
-                
-                ret_ = f"""<proposal count> 1 </proposal count>
-        <my resources> {self.add_config['player_initial_resources']}</my resources>
-        <my goals> {self.add_config['player_goal']} </my goals>
-        <reason> __human_response_ </reason>
-        <player answer> PROPOSAL </player answer>
-        <newly proposed trade> Player RED Gives X: 1 | Player BLUE Gives ZUP: {int(float(json_['human_move']['offer']['offer']['amount']))} </newly proposed trade>
-        <message> { json_['human_move']['chat_message']['message']['content']} </message>"""
-        # accept and reject messages
-        elif json_['human_move']['offer']['type'] == 'offer_response':
-
-            type_ = json_['human_move']['offer']['offer']['final_result']
-
-            if type_ == 'appected':
-                ret_ = f"""<proposal count> 1 </proposal count>
-        <my resources> {self.add_config['player_initial_resources']}</my resources>
-        <my goals> {self.add_config['player_goal']} </my goals>
-        <reason> __human_response_ </reason>
-        <player answer> {ACCEPTING_TAG} </player answer>
-        <newly proposed trade> Player RED Gives X: 1 | Player BLUE Gives ZUP: {int(float(json_['human_move']['offer']['offer']['amount']))} </newly proposed trade>
-        <message> { json_['human_move']['chat_message']['message']['content']} </message>"""
-
-            elif type_== 'rejected':
-                
-                ret_ = f"""<proposal count> 1 </proposal count>
-        <my resources> {self.add_config['player_initial_resources']} </my resources>
-        <my goals> {self.add_config['player_goal']} </my goals>
-        <reason> __human_response_ </reason>
-        <player answer> {REJECTION_TAG} </player answer>
-        <newly proposed trade> Player RED Gives X: 1 | Player BLUE Gives ZUP: {int(float(json_['human_move']['offer']['offer']['amount']))} </newly proposed trade>
-        <message> { json_['human_move']['chat_message']['message']['content']} </message>"""
+                    type_ = json_['human_move']['offer']['final_result']
+    
+                    print('here------2', type_)
+        
+                    if type_ == 'accepted':
+                        ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
+                <{RESOURCES_TAG}> {self.add_config['player_initial_resources']}</{RESOURCES_TAG}>
+                <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+                <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
+                <{PLAYER_ANSWER_TAG}> {ACCEPTING_TAG} </{PLAYER_ANSWER_TAG}>
+                <{PROPOSED_TRADE_TAG}> NONE</{PROPOSED_TRADE_TAG}>
+                <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
+        
+                    elif type_== 'rejected':
                         
-        return ret_
+                        ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
+                <{RESOURCES_TAG}> {self.add_config['player_initial_resources']} </{RESOURCES_TAG}>
+                <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+                <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
+                <{PLAYER_ANSWER_TAG}> {REJECTION_TAG} </{PLAYER_ANSWER_TAG}>
+                <{PROPOSED_TRADE_TAG}> NONE </{PROPOSED_TRADE_TAG}>
+                <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
+                
+                print(ret_)
+                
+            return ret_
+        except Exception as e:
+            print('There was an exception',e,json_)
 
+
+    
     def chat(self) -> str:
         """
         Called by the game loop to get this agent's next utterance.
