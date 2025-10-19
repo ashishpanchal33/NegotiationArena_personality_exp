@@ -240,7 +240,7 @@ class BuySellGame(AlternatingGameEndsOnTag):
         self.game_state.append(datum)
 
 
-    def _detect_terminal_tag(self, message):
+    def _detect_terminal_tag(self, message=None):
         """
         Detect 'accept' or 'reject' from the last message payload.
         Adapt this to your actual message shape if needed.
@@ -252,6 +252,7 @@ class BuySellGame(AlternatingGameEndsOnTag):
         except Exception:
             return None
     
+
     
     def _post_terminal_accept_to_webapp_if_bridge_actor(self):
         """
@@ -299,6 +300,7 @@ class BuySellGame(AlternatingGameEndsOnTag):
                             "agent_name": agent_name,
                             "role": role,
                             "no_wait": True,
+                            "reason": "iteration_cap",
                             "message": "Arena ended by iteration limit",
                         }
                         try:
@@ -310,9 +312,6 @@ class BuySellGame(AlternatingGameEndsOnTag):
                             logger.warning("Session end POST failed: %s", e)
                         break    
 
-
-
-                
                 
                 return  # per requirement: only notify when the AI accepted
 
@@ -406,3 +405,5 @@ class BuySellGame(AlternatingGameEndsOnTag):
             )
 
             self.game_state.append(datum)
+
+        return super().after_game_ends() if hasattr(super(), "after_game_ends") else None
