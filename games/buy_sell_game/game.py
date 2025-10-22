@@ -51,6 +51,8 @@ class BuySellGameDefaultParser(ExchangeGameDefaultParser):
         :param response:
         :return:
         """
+
+        
         (
             resources,
             goal,
@@ -74,9 +76,9 @@ class BuySellGameDefaultParser(ExchangeGameDefaultParser):
         try:
             resources = Resources.from_string(resources)
         except Exception as e:
-            print(e)
-            print(resources)
-            a()
+            print('parse ERROR- ',e)
+            print('parse resources- ',resources)
+
         trade = self.parse_trade(response, PROPOSED_TRADE_TAG)
 
         # create the message, we are going to split between public messages and secret messages.
@@ -190,6 +192,7 @@ class BuySellGame(AlternatingGameEndsOnTag):
         players,
         response,
         ):
+        
         try:
             agent_message = self.game_interface.parse(response)
         except Exception as e:

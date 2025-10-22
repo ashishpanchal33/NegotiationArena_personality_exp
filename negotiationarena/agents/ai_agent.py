@@ -55,7 +55,8 @@ class AIProxyClientAgent(Agent):
         seed: int = None,
         role: str = "buyer",
         server_wait_timeout_seconds: int = 60,
-        client_timeout_cushion_seconds: int = 15
+        client_timeout_cushion_seconds: int = 15,
+        wait = 0.2
     ):
         super().__init__(agent_name)
         self.session_id = session_id
@@ -74,6 +75,8 @@ class AIProxyClientAgent(Agent):
         self.sys_ = True  # not first_turn_done
         self.first_turn_done = False
         self.is_agent_one = (AGENT_ONE in self.agent_name)
+        self.wait = wait
+
 
         print(self.is_agent_one )
         
@@ -89,10 +92,15 @@ class AIProxyClientAgent(Agent):
         self._last_assistant_content = ""
 
         self._last_reponse = {}
-        
-        self.add_config =  {"player_initial_resources":   "X: 1",
+
+
+        if role =='seller':
+            self.add_config =  {"player_initial_resources":   "X: 1",
                             "player_goal":"Sell resources for ZUP. You might want to maximize profit. It costed X: 40 ZUP to produce the resources"} 
-        
+        else:
+            self.add_config =  {"player_initial_resources":   "ZUP: 60",
+                            "player_goal":"Buy resources with ZUP. You might want to maximize profit. You think you can resell the product at X: 60 ZUP for the resources."}            
+
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -254,6 +262,8 @@ class AIProxyClientAgent(Agent):
             # If server returns success True but no human_move (shouldn't happen), keep looping
             # If timeout/error, also keep looping
             attempt += 1
+
+            #{'success': False, 'human_move': None, 'timeout': True, 'next_poll_seconds': 2}
             # Optional cap
             if max_minutes is not None:
                 if (time.monotonic() - start) >= max_minutes * 60:
@@ -280,9 +290,12 @@ class AIProxyClientAgent(Agent):
             # graceful fallback
         else:
             content = "[No content returned by API]"
+
+        print('---content----',content)
             
         self.update_conversation_tracking("assistant", content)
-        return content or "[No content returned by API]"
+
+        return content
 
 
 
@@ -350,41 +363,59 @@ class AIProxyClientAgent(Agent):
                     self._last_reponse = json_['human_move']['offer']['offer']['id']
                     
                     ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
-            <{RESOURCES_TAG}> {self.add_config['player_initial_resources']}</{RESOURCES_TAG}>
-            <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
-            <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
-            <{PLAYER_ANSWER_TAG}> PROPOSAL </{PLAYER_ANSWER_TAG}>
-            <{PROPOSED_TRADE_TAG}> Player RED Gives X: 1 | Player BLUE Gives ZUP: {int(float(json_['human_move']['offer']['offer']['amount']))} </{PROPOSED_TRADE_TAG}>
-            <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
-            # accept and reject messages
+                    <{RESOURCES_TAG}> {self.add_config['player_initial_resources']}</{RESOURCES_TAG}>
+                    <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+                    <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
+                    <{PLAYER_ANSWER_TAG}> PROPOSAL </{PLAYER_ANSWER_TAG}>
+                    <{PROPOSED_TRADE_TAG}> Player RED Gives X: 1 | Player BLUE Gives ZUP: {int(float(json_['human_move']['offer']['offer']['amount']))} </{PROPOSED_TRADE_TAG}>
+                    <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
+                # accept and reject messages
                 elif json_['human_move']['offer']['type'] == 'offer_response':
     
-                    print('here------2')
+                    #print('here------2')
         
                     type_ = json_['human_move']['offer']['final_result']
     
                     print('here------2', type_)
         
                     if type_ == 'accepted':
-                        ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
-                <{RESOURCES_TAG}> {self.add_config['player_initial_resources']}</{RESOURCES_TAG}>
-                <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
-                <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
-                <{PLAYER_ANSWER_TAG}> {ACCEPTING_TAG} </{PLAYER_ANSWER_TAG}>
-                <{PROPOSED_TRADE_TAG}> NONE</{PROPOSED_TRADE_TAG}>
-                <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
-        
-                    elif type_== 'rejected':
+    
+
+                        if not json_['human_move']['chat_message']:
+                            chat_m ='Deal'
+                        else:
+                            chat_m = json_['human_move']['chat_message']['message']['content']
+                            
+
                         
                         ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
-                <{RESOURCES_TAG}> {self.add_config['player_initial_resources']} </{RESOURCES_TAG}>
-                <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
-                <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
-                <{PLAYER_ANSWER_TAG}> {REJECTION_TAG} </{PLAYER_ANSWER_TAG}>
-                <{PROPOSED_TRADE_TAG}> NONE </{PROPOSED_TRADE_TAG}>
-                <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
+                        <{RESOURCES_TAG}> {self.add_config['player_initial_resources']}</{RESOURCES_TAG}>
+                        <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+                        <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
+                        <{PLAYER_ANSWER_TAG}> {ACCEPTING_TAG} </{PLAYER_ANSWER_TAG}>
+                        <{PROPOSED_TRADE_TAG}> NONE</{PROPOSED_TRADE_TAG}>
+                        <{MESSAGE_TAG}> { chat_m} </{MESSAGE_TAG}>"""
                 
-                print(ret_)
+                    elif type_== 'rejected':
+
+                        
+                        if not json_['human_move']['chat_message']:
+                            chat_m ='No Deal'
+                        else:
+                            chat_m = json_['human_move']['chat_message']['message']['content']
+                            
+                        
+                        ret_ = f"""<{PROPOSAL_COUNT_TAG}> 1 </{PROPOSAL_COUNT_TAG}>
+                        <{RESOURCES_TAG}> {self.add_config['player_initial_resources']} </{RESOURCES_TAG}>
+                        <{GOALS_TAG}> {self.add_config['player_goal']} </{GOALS_TAG}>
+                        <{REASONING_TAG}> __human_response_ </{REASONING_TAG}>
+                        <{PLAYER_ANSWER_TAG}> {REJECTION_TAG} </{PLAYER_ANSWER_TAG}>
+                        <{PROPOSED_TRADE_TAG}> NONE </{PROPOSED_TRADE_TAG}>
+                        <{MESSAGE_TAG}> { json_['human_move']['chat_message']['message']['content']} </{MESSAGE_TAG}>"""
+                        
+                print(f'ret_ {ret_}')
+
+            #print(f'ret_ {type_}')#, no offer { (json_['human_move']['offer'] != None) }')
                 
             return ret_
         except Exception as e:
@@ -441,7 +472,7 @@ class AIProxyClientAgent(Agent):
             if not self.is_agent_one: 
                 print(1)
                 data = self._post_submit(payload)
-                if not data.get("success"):
+                if (not data.get("success")) or data.get("next_poll_seconds") :
                     # Server says it's not our turn; fallback to wait
                     #data = self._post_wait(payload)
                     data = self._wait_until_response(payload)
@@ -450,6 +481,8 @@ class AIProxyClientAgent(Agent):
                 else:
                     # We submitted; next time expect human to speak
                     self.expecting_human_next = True
+
+                    
             else:
                 # Agent two must wait first
                 print(2)
@@ -459,10 +492,17 @@ class AIProxyClientAgent(Agent):
                 self.expecting_human_next = False
             self.first_turn_done = True
 
-            print('data---'*5)
+            print('data---'*5)            
             print(data)
-            
-            return self._consume_content(data)
+
+            ret__ = self._consume_content(data)
+
+            if self.wait:
+                print('message_length', len(ret__.split('<message>')[-1][:-11]))
+                time.sleep(len(ret__.split('<message>')[-1][:-11])*self.wait)
+                
+                
+            return ret__
 
         
         # Subsequent turns:
@@ -476,7 +516,8 @@ class AIProxyClientAgent(Agent):
 
             print(4)
             data = self._post_submit(payload)
-            if not data.get("success") and data.get("reason") == "not_turn":
+            print('data',data)
+            if ((not data.get("success") ) or data.get("next_poll_seconds")):# and data.get("reason") == "not_turn" :
                 # Server disagrees; we should wait now
                 data = self._wait_until_response(payload)
                 #data = self._post_wait(payload)
@@ -486,7 +527,14 @@ class AIProxyClientAgent(Agent):
                 # We successfully submitted; next we should wait for human
                 self.expecting_human_next = True
 
-        return self._consume_content(data)
+
+        ret__ = self._consume_content(data)
+                    
+        if self.wait:
+            print('message_length', len(ret__.split('<message>')[-1][:-11]))
+            time.sleep(len(ret__.split('<message>')[-1][:-11])*self.wait)
+
+        return ret__
 
 
 
