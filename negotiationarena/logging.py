@@ -104,6 +104,36 @@ class GameEncoder(json.JSONEncoder):
         if isinstance(obj, Agent):
             return obj.get_state()
 
+        
+        # Defer import to avoid circular import issues if any
+        try:
+            from negotiationarena.agents.ai_agent import IndianEnglishConverterClient  # adjust if your module path differs
+        except Exception:
+            IndianEnglishConverterClient = None
+
+        # Handle IndianEnglishConverterClient explicitly
+        if (IndianEnglishConverterClient and isinstance(obj, IndianEnglishConverterClient)) or (
+            getattr(obj, "__class__", None) and getattr(obj.__class__, "__name__", "") == "IndianEnglishConverterClient"
+        ):
+            # Return a JSON-safe summary (do NOT include secrets or non-serializable objects)
+            client_class = None
+            try:
+                client_class = obj.client.__class__.__name__
+            except Exception:
+                client_class = None
+
+            return {
+                "__type__": "IndianEnglishConverterClient",
+                "model": getattr(obj, "model", None),
+                "temperature": getattr(obj, "temperature", None),
+                "max_tokens": getattr(obj, "max_tokens", None),
+                "seed": getattr(obj, "seed", None),
+                "proficiency": getattr(obj, "proficiency", None),
+                "client_class": client_class,
+            }
+
+            
+
         if isinstance(obj, GameParser):
             return {"class": obj.__class__.__name__}
 

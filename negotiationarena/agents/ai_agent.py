@@ -14,8 +14,100 @@ from negotiationarena.constants import ACCEPTING_TAG ,PROPOSAL_COUNT_TAG ,RESOUR
 
 from negotiationarena.utils import extract_multiple_tags
 
+from negotiationarena.proficiency.Indianize import PROFICIENCY_SYSTEM_PROMPTS
+from typing import Any, Dict, Optional, Literal
+from dataclasses import dataclass, field
+import json
+
 
 import requests
+
+
+
+
+
+
+class IndianEnglishConverterClient:
+    """
+    A generic client that calls an external API to transform text using a system prompt per proficiency.
+    You can point this at your LLM gateway or OpenAI-compatible endpoint.
+
+    Environment variables (example):
+      INDIANIZER_API_BASE=https://your-llm-gateway.example.com
+      INDIANIZER_API_KEY=xxxx
+      INDIANIZER_MODEL=gpt-4o-mini  (or your model id)
+    """
+    def __init__(
+
+        self,
+        #agent_name: str,
+        model="gpt-4-1106-preview",
+        temperature=0.7,
+        max_tokens=400,
+        seed=None,
+        proficiency = 'low',
+        **kwargs
+    ):
+        
+
+        self.run_epoch_time_ms = str(round(time.time() * 1000))
+        self.model = model
+        self.conversation = []
+        self.proficiency = proficiency
+
+        if model[:2] =="o1":
+            self.prompt_entity_initializer = "assistant"
+        else:
+            self.prompt_entity_initializer = "system"
+        self.seed = (
+            int(self.run_epoch_time_ms) + random.randint(0, 2**16)
+            if seed is None
+            else seed
+        )
+        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+
+
+    def __deepcopy__(self, memo):
+        """
+        Deepcopy is needed because we cannot pickle the llama object.
+        :param memo:
+        :return:
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k == "client" and not isinstance(v, str):
+                v = v.__class__.__name__
+            setattr(result, k, deepcopy(v, memo))
+        return result
+        
+    def convert(self, text: str) -> str:
+        try:
+            system_prompt = PROFICIENCY_SYSTEM_PROMPTS[self.proficiency]
+            response = self.client.responses.create(
+                model=self.model,
+                store=True,                    # Enables caching for repeated context
+                instructions=system_prompt,  # Send system only once
+                input= text ,
+                max_output_tokens=self.max_tokens,
+                temperature=self.temperature,
+    
+            )
+            if len(response.output_text) == 0:
+                a()
+                
+            return response.output_text
+        except Exception as e:
+            logger.exception("[Indianizer] conversion failed; falling back to original text.")
+            return text
+
+
+
+
+
 
 
 class AIProxyClientAgent(Agent):
@@ -56,7 +148,9 @@ class AIProxyClientAgent(Agent):
         role: str = "buyer",
         server_wait_timeout_seconds: int = 60,
         client_timeout_cushion_seconds: int = 15,
-        wait = 0.2
+        wait = 0.2,
+        indianizer_client: Optional[IndianEnglishConverterClient] = None,
+        
     ):
         super().__init__(agent_name)
         self.session_id = session_id
@@ -76,6 +170,9 @@ class AIProxyClientAgent(Agent):
         self.first_turn_done = False
         self.is_agent_one = (AGENT_ONE in self.agent_name)
         self.wait = wait
+
+
+        self.indianizer = indianizer_client
 
 
         print(self.is_agent_one )
@@ -180,6 +277,8 @@ class AIProxyClientAgent(Agent):
                                                            )
             
             price = re.search(r'\d+$', trade_old).group(0)
+
+        message_to_pass_converted = self.convert_language_text(message_to_pass)
         
         payload = {
             "session_id": self.session_id,
@@ -189,7 +288,8 @@ class AIProxyClientAgent(Agent):
             "role_display" : self.role,
             # Optional knobs your API may use:
             "type": ( 'offer' if answer_=='PROPOSAL' else ('reject' if answer_ == REJECTION_TAG else 'accept')),
-            "message": message_to_pass,
+            "message": message_to_pass_converted,
+            "original_message":message_to_pass,
             "amount" : price,
             "seed": self.seed,}
 
@@ -246,6 +346,12 @@ class AIProxyClientAgent(Agent):
 
 
 
+    def convert_language_text(self,text):
+        if self.indianizer:
+            return self.indianizer.convert(text)
+        else:
+            return text
+    
     def _wait_until_response(self, payload: dict, max_minutes: float | None = None, retry_base_delay: float = 1.0) -> dict:
         """
         Indefinite (or capped) long-poll loop: keeps calling wait until we get a success with a human_move.
