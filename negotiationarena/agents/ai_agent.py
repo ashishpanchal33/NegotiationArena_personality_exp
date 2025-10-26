@@ -46,6 +46,7 @@ class IndianEnglishConverterClient:
         max_tokens=400,
         seed=None,
         proficiency = 'low',
+        prompt_library = PROFICIENCY_SYSTEM_PROMPTS,
         **kwargs
     ):
         
@@ -68,6 +69,8 @@ class IndianEnglishConverterClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
+        self.prompt_library = prompt_library
+
 
     def __deepcopy__(self, memo):
         """
@@ -83,19 +86,36 @@ class IndianEnglishConverterClient:
                 v = v.__class__.__name__
             setattr(result, k, deepcopy(v, memo))
         return result
-        
-    def convert(self, text: str) -> str:
-        try:
-            system_prompt = PROFICIENCY_SYSTEM_PROMPTS[self.proficiency]
-            response = self.client.responses.create(
+
+    def call_model(self,system_prompt, message):
+
+        if self.model == "gpt-5":
+            return client.responses.create(
                 model=self.model,
                 store=True,                    # Enables caching for repeated context
                 instructions=system_prompt,  # Send system only once
-                input= text ,
+                input= message,
+                max_output_tokens=self.max_tokens,
+                reasoning={ "effort": "low" }, # this can be set ... but
+                temperature=1,
+                #response_format={"type": "text"},
+    
+            )
+        else:
+            return self.client.responses.create(
+                model=self.model,
+                store=True,                    # Enables caching for repeated context
+                instructions=system_prompt,  # Send system only once
+                input= message ,
                 max_output_tokens=self.max_tokens,
                 temperature=self.temperature,
     
             )
+        
+    def convert(self, text: str) -> str:
+        try:
+            system_prompt = self.prompt_library[self.proficiency]
+            response = self.call_model( system_prompt,text)
             if len(response.output_text) == 0:
                 a()
                 

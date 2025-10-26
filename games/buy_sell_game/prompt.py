@@ -42,7 +42,7 @@ This information will not be sent to the other player. It is just for you to kee
 
 4. At each turn send messages to each other by using the following format:
 
-<{MESSAGE_TAG}>your message here</{MESSAGE_TAG}>
+<{MESSAGE_TAG}>your message here. Which must be between 11–20 words</{MESSAGE_TAG}>
 
 You can decide if you want disclose your resources, goals, cost and willingness to pay in the message.
 ```

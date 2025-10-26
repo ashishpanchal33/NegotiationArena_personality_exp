@@ -40,6 +40,7 @@ class ChatGPTAgent(Agent):
         self.max_tokens = max_tokens
 
     def init_agent(self, system_prompt, role):
+        self.system_prompt = system_prompt
         if AGENT_ONE in self.agent_name:
             # we use the user role to tell the assistant that it has to start.
 
@@ -83,8 +84,10 @@ class ChatGPTAgent(Agent):
             model=self.model,
             messages=self.conversation,
             temperature= 1, #self.temperature,
-            max_completion_tokens=self.max_tokens,
+                    #max_completion_tokens=self.max_tokens,
             seed=self.seed,
+            response_format={"type": "text"},
+            reasoning_effort = 'low'
             )
         else:
             chat = self.client.chat.completions.create(
