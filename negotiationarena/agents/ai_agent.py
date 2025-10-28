@@ -90,12 +90,12 @@ class IndianEnglishConverterClient:
     def call_model(self,system_prompt, message):
 
         if self.model == "gpt-5":
-            return client.responses.create(
+            return self.client.responses.create(
                 model=self.model,
                 store=True,                    # Enables caching for repeated context
                 instructions=system_prompt,  # Send system only once
                 input= message,
-                max_output_tokens=self.max_tokens,
+                #max_output_tokens=self.max_tokens,
                 reasoning={ "effort": "low" }, # this can be set ... but
                 temperature=1,
                 #response_format={"type": "text"},
@@ -121,7 +121,7 @@ class IndianEnglishConverterClient:
                 
             return response.output_text
         except Exception as e:
-            logger.exception("[Indianizer] conversion failed; falling back to original text.")
+            print(f"[Indianizer] conversion failed; falling back to original text.{e}, {text}")
             return text
 
 

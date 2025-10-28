@@ -181,8 +181,34 @@ class GuardAgent(ConverterAgent):
             return param_dict['message']
 
 
+    def DE_manipulative_persuasive_threatening(self,param_dict=None) -> str:
+
+        try:
+            system_prompt = self.prompt_library['DE_manipulative_persuasive_threatening']
+            response = self.call_model( system_prompt,param_dict['message'])
+            if len(response.output_text) == 0:
+                a()
+                
+            return response.output_text
+        except Exception as e:
+            print(f"[DE_manipulative_persuasive_threatening] conversion failed; falling back to original text., error : {e}, message: {param_dict['message']}")
+            return param_dict['message']
+
+    def ToxicityFilter(self,param_dict=None) -> str:
+
+        try:
+            system_prompt = self.prompt_library['ToxicityFilter']
+            response = self.call_model( system_prompt,param_dict['message'])
+            if len(response.output_text) == 0:
+                a()
+                
+            return response.output_text
+        except Exception as e:
+            print(f"[ToxicityFilter] conversion failed; falling back to original text., error : {e}, message: {param_dict['message']}")
+            return param_dict['message']
 
 
+            
     def call_model(self,system_prompt, message):
 
         if self.model == "gpt-5":
@@ -192,7 +218,7 @@ class GuardAgent(ConverterAgent):
                 instructions=system_prompt,  # Send system only once
                 input= message,
                 max_output_tokens=self.max_tokens,
-                reasoning={ "effort": "low" }, # this can be set ... but
+                reasoning={ "effort": "minimal" }, #{ "effort": "low" }, # this can be set ... but
                 temperature=1,
                 #response_format={"type": "text"},
     
@@ -225,6 +251,22 @@ class GuardAgent(ConverterAgent):
             print(f"[ComplianceFilter] conversion failed; falling back to original text., , error : {e}, message: {param_dict['message']}")
             return param_dict['message']
 
+
+
+    def PrivacyFilter(self,param_dict=None) -> str:
+
+        try:
+            system_prompt = self.prompt_library['PrivacyFilter']
+            response = self.call_model( system_prompt,param_dict['message'])
+            if len(response.output_text) == 0:
+                a()
+                
+            return response.output_text
+        except Exception as e:
+            print(f"[PrivacyFilter] conversion failed; falling back to original text., error : {e}, message: {param_dict['message']}")
+            return param_dict['message']
+            
+
     def convert(self, text:str,  what=None):
 
 
@@ -237,7 +279,7 @@ class GuardAgent(ConverterAgent):
         if text:
     
             
-            param_dict = self.extract_all_tags(text, (what in [ 'ObjectiveTone_outgoing', 'ComplianceFilter']))
+            param_dict = self.extract_all_tags(text, (what in [ 'ObjectiveTone_outgoing', 'ComplianceFilter','PrivacyFilter']))
                     
             if what == 'Canonicalization':
                 
@@ -247,6 +289,16 @@ class GuardAgent(ConverterAgent):
             elif what == 'ObjectiveTone_incoming':
 
                 return self.remake_message(text, param_dict= param_dict, agent_function=self.ObjectiveToneAgent ,outgoing =False )
+
+
+            elif what == 'DE_manipulative_persuasive_threatening':
+
+                return self.remake_message(text, param_dict= param_dict, agent_function=self.DE_manipulative_persuasive_threatening ,outgoing =False )
+
+
+            elif what == 'ToxicityFilter':
+
+                return self.remake_message(text, param_dict= param_dict, agent_function=self.ToxicityFilter ,outgoing =False )
             
             elif what == 'ObjectiveTone_outgoing':
 
@@ -257,6 +309,10 @@ class GuardAgent(ConverterAgent):
 
                 return self.remake_message(text, param_dict= param_dict, agent_function=self.ComplianceFilter,outgoing =True )
 
+
+            elif what == 'PrivacyFilter':
+
+                return self.remake_message(text, param_dict= param_dict, agent_function=self.PrivacyFilter,outgoing =True )
 
             
                 
@@ -299,7 +355,10 @@ class LLMPreprocessingAgentBase(ChatGPTAgent):
                     'Canonicalization':False,
                     'ObjectiveTone_incoming':False,
                     'ObjectiveTone_outgoing':False,
-                    'ComplianceFilter':False
+                    'ComplianceFilter':False,
+                    'DE_manipulative_persuasive_threatening':False,
+                    'ToxicityFilter':False,
+                    'PrivacyFilter':False
                     },
 
         
@@ -324,9 +383,9 @@ class LLMPreprocessingAgentBase(ChatGPTAgent):
         self.conversation_original = []
 
 
-        if sum([self.gaurding[i] for i in  ['Canonicalization','ObjectiveTone_incoming']]    ) >1:
+        if sum([self.gaurding[i] for i in  ['Canonicalization','ObjectiveTone_incoming','DE_manipulative_persuasive_threatening','ToxicityFilter']]    ) >1:
             raise Exception(f"[LLMPreprocessingAgentBase] more than one ingoing guards active {self.gaurding}")
-        if sum([self.gaurding[i] for i in  ['ObjectiveTone_outgoing','ComplianceFilter'] ]   ) >1:
+        if sum([self.gaurding[i] for i in  ['ObjectiveTone_outgoing','ComplianceFilter','PrivacyFilter'] ]   ) >1:
             raise Exception(f"[LLMPreprocessingAgentBase] more than one outgoing guards active {self.gaurding}")
 
 
@@ -352,24 +411,35 @@ class LLMPreprocessingAgentBase(ChatGPTAgent):
         transformed = message
         if role == 'user':
             
-            if any([self.gaurding[i] for i in  ['Canonicalization','ObjectiveTone_incoming'] ]):
+            if any([self.gaurding[i] for i in  ['Canonicalization','ObjectiveTone_incoming','DE_manipulative_persuasive_threatening','ToxicityFilter']]):
                 
                 if self.gaurding['Canonicalization']: # for incoming
                     transformed = self.converter.convert( message,  what='Canonicalization')
                 elif self.gaurding['ObjectiveTone_incoming']: #for incoming
                     transformed = self.converter.convert( message,  what='ObjectiveTone_incoming')
+                elif self.gaurding['DE_manipulative_persuasive_threatening']: #for incoming
+                    transformed = self.converter.convert( message,  what='DE_manipulative_persuasive_threatening')
+                elif self.gaurding['ToxicityFilter']: #for incoming
+                    transformed = self.converter.convert( message,  what='ToxicityFilter')
+
+
+
+
+                    
 
                 print('\n ----------------')
                 print('others transformed:', transformed)
                 print('\n ----------------')
 
         else:
-            if any([self.gaurding[i] for i in  ['ComplianceFilter','ObjectiveTone_outgoing']] ):
+            if any([self.gaurding[i] for i in  ['ComplianceFilter','ObjectiveTone_outgoing','PrivacyFilter']] ):
                 
                 if self.gaurding['ComplianceFilter']: # for incoming
                     transformed = self.converter.convert( message,  what='ComplianceFilter')
                 elif self.gaurding['ObjectiveTone_outgoing']: #for incoming
                     transformed = self.converter.convert( message,  what='ObjectiveTone_outgoing')
+                elif self.gaurding['PrivacyFilter']: #for incoming
+                    transformed = self.converter.convert( message,  what='PrivacyFilter')
 
 
         return transformed
@@ -437,7 +507,7 @@ class LLMPreprocessingAgentBase(ChatGPTAgent):
 
         transformed = self.get_transformed(role = "assistant", message = chat.choices[0].message.content)
 
-        if any([self.gaurding[i] for i in  ['ComplianceFilter','ObjectiveTone_outgoing']] ):
+        if any([self.gaurding[i] for i in  ['ComplianceFilter','ObjectiveTone_outgoing','PrivacyFilter']] ):
             print('\n ----------------')
             print('my message transformed:', transformed)
             print('\n ----------------')

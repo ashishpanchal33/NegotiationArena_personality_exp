@@ -45,6 +45,7 @@ This information will not be sent to the other player. It is just for you to kee
 <{MESSAGE_TAG}>your message here. Which must be between 11–20 words</{MESSAGE_TAG}>
 
 You can decide if you want disclose your resources, goals, cost and willingness to pay in the message.
+In case you are accepting a deal, do not discuss the protocol of money transfer.
 ```
 
 Here is what you have access to:
